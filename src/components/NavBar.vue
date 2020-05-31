@@ -4,32 +4,37 @@
       <v-toolbar-title class="brand">Fuzzy Trader</v-toolbar-title>
 
       <v-spacer></v-spacer>
-      <v-btn :to="{ name: 'Home' }" icon>
-        <v-icon>mdi-home</v-icon>
-      </v-btn>
+      <div class="btn-nav">
+        <v-btn :to="{ name: 'Home' }" icon>
+          <v-icon>mdi-home</v-icon>
+        </v-btn>
 
-      <v-btn :to="{ name: 'Ativos' }" icon>
-        <v-icon>mdi-chart-areaspline</v-icon>
-      </v-btn>
+        <v-btn :to="{ name: 'Ativos' }" icon>
+          <v-icon>mdi-chart-areaspline</v-icon>
+        </v-btn>
 
-      <v-btn :to="{ name: 'Carteira' }" icon>
-        <v-icon>mdi-wallet</v-icon>
-      </v-btn>
+        <v-btn :to="{ name: 'Carteira' }" icon>
+          <v-icon>mdi-wallet</v-icon>
+        </v-btn>
+      </div>
       <h1>U$ {{ walletModule.valueWallet }}</h1>
     </v-app-bar>
-    <v-bottom-navigation class="navBottom" v-model="bottomNav" fixed>
-      <v-btn value="inicio">
-        <span>Inicio</span>
+    <v-bottom-navigation
+      class="navBottom"
+      v-model="bottomNav"
+      color="#fff"
+      dark
+      fixed
+    >
+      <v-btn :to="{ name: 'Home' }" value="inicio">
         <v-icon>mdi-home</v-icon>
       </v-btn>
       <v-spacer></v-spacer>
-      <v-btn value="ativo">
-        <span>Ativos</span>
+      <v-btn :to="{ name: 'Ativos' }" value="ativo">
         <v-icon>mdi-chart-areaspline</v-icon>
       </v-btn>
       <v-spacer></v-spacer>
-      <v-btn value="carteira">
-        <span>Carteira</span>
+      <v-btn :to="{ name: 'Carteira' }" value="carteira">
         <v-icon>mdi-wallet</v-icon>
       </v-btn>
     </v-bottom-navigation>
@@ -56,7 +61,7 @@ export default {
 
 .navTop {
   height: 60px;
-  padding: 0 250px;
+  padding: 0 200px;
 }
 
 .navBottom {
@@ -84,12 +89,24 @@ export default {
 --------------------------------------------------------------*/
 @media (max-width: 991px) {
   .navTop {
+    height: 80px !important;
+    padding: 10px 0;
+  }
+  .navTop h1 {
+    font-size: 20px !important;
+  }
+  .brand {
+    font-size: 25px !important;
+  }
+  .btn-nav {
     display: none !important;
   }
   .navBottom {
     bottom: -1px !important;
     display: flex !important;
     padding: 0 20px;
+    height: 60px !important;
+    background-color: #0e153a !important;
   }
 }
 </style>

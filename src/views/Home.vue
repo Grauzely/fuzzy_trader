@@ -16,20 +16,30 @@
           Informe o valor em dólar que deseja aplicar:
         </h1>
         <div class="field-value">
-          <h1>U$</h1>
-          <v-text-field
-            class="input-value"
-            filled
-            :error-messages="msgWarning"
-            v-model.lazy="valueToInvest"
-            v-money="money"
-            @focus="clearMsgWarning"
-          />
-          <v-btn class="btn-search" @click="search">
-            <span v-show="!loading">Buscar Ativos</span>
-            <v-progress-circular v-show="loading" indeterminate color="white">
-            </v-progress-circular>
-          </v-btn>
+          <v-row>
+            <v-col class="col-field-value" cols="12" md="8">
+              <h1>U$</h1>
+              <v-text-field
+                class="input-value"
+                filled
+                :error-messages="msgWarning"
+                v-model.lazy="valueToInvest"
+                v-money="money"
+                @focus="clearMsgWarning"
+              />
+            </v-col>
+            <v-col class="col-field-value" cols="12" md="4">
+              <v-btn class="btn-search" @click="search">
+                <span v-show="!loading">Buscar Ativos</span>
+                <v-progress-circular
+                  v-show="loading"
+                  indeterminate
+                  color="white"
+                >
+                </v-progress-circular>
+              </v-btn>
+            </v-col>
+          </v-row>
         </div>
         <p class="obs">
           * Com base no valor que você deseja aplicar buscaremos os melhores
@@ -138,6 +148,14 @@ export default {
   display: flex;
   flex-direction: row;
   padding: 0 20px;
+  justify-content: center;
+}
+
+.col-field-value {
+  display: flex;
+  flex-direction: row;
+  padding: 0;
+  justify-content: center;
 }
 
 .field-value h1 {
@@ -146,10 +164,21 @@ export default {
 }
 
 .btn-search {
-  margin-left: 10px;
   margin-top: 4px;
   background-color: #3d5af1 !important;
   color: #fff !important;
   height: 50px !important;
+}
+
+/*--------------------------------------------------------------
+# Responsive Media Queries
+--------------------------------------------------------------*/
+@media (max-width: 991px) {
+  .container-home {
+    padding-top: 40px;
+  }
+  .obs {
+    margin-top: 20px;
+  }
 }
 </style>

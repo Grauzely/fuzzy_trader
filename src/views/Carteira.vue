@@ -7,7 +7,7 @@
         </h1>
       </div>
       <v-row no-gutters>
-        <v-col cols="4">
+        <v-col cols="12" md="4">
           <v-card class="card-wallet">
             <div class="card-wallet-header">
               <h1>Valor Total</h1>
@@ -24,7 +24,7 @@
             </div>
           </v-card>
         </v-col>
-        <v-col cols="4">
+        <v-col cols="12" md="4">
           <v-card class="card-wallet">
             <div class="card-wallet-header">
               <h1>Valor em Caixa</h1>
@@ -41,7 +41,7 @@
             </div>
           </v-card>
         </v-col>
-        <v-col cols="4">
+        <v-col cols="12" md="4">
           <v-card class="card-wallet">
             <div class="card-wallet-header">
               <h1>Valor em Investido</h1>
@@ -62,7 +62,8 @@
       <v-row class="row-assets-wallet">
         <v-col
           class="col-assets-wallet"
-          cols="4"
+          cols="12"
+          md="4"
           v-for="(asset, index) in this.walletModule.assetsWallet"
           :key="index"
         >
@@ -159,7 +160,7 @@ export default {
 
 <style>
 .container-wallet {
-  padding: 70px 250px 70px 250px;
+  padding: 70px 200px 70px 200px;
 }
 
 .header {
@@ -225,5 +226,13 @@ export default {
 .card-line-red h2 {
   font-size: 18px;
   color: red;
+}
+/*--------------------------------------------------------------
+# Responsive Media Queries
+--------------------------------------------------------------*/
+@media (max-width: 991px) {
+  .container-wallet {
+    padding: 80px 12px;
+  }
 }
 </style>

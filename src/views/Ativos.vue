@@ -437,7 +437,7 @@ export default {
 
 <style>
 .container-assets {
-  padding: 70px 250px 70px 250px;
+  padding: 70px 200px 70px 200px;
 }
 
 .info-msg {
@@ -561,5 +561,20 @@ export default {
   display: flex;
   flex-direction: row;
   padding: 0;
+}
+/*--------------------------------------------------------------
+# Responsive Media Queries
+--------------------------------------------------------------*/
+@media (max-width: 991px) {
+  .container-assets {
+    padding: 80px 12px;
+  }
+  .header-title h1 {
+    font-size: 24px;
+  }
+  .body-title {
+    font-size: 24px;
+    font-weight: 500;
+  }
 }
 </style>
