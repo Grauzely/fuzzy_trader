@@ -12,12 +12,20 @@
           height="auto"
           src="../assets/chart.png"
         />
-        <h1>
+        <h1 v-show="!this.walletModule.valueInBox">
           Informe o valor em dólar que deseja aplicar:
+        </h1>
+        <h1 v-show="this.walletModule.valueInBox">
+          Você tem disponível em caixa U$
+          {{
+            this.walletModule.valueInBox
+              ? this.walletModule.valueInBox
+              : "0.00"
+          }}, deseja adicionar mais?
         </h1>
         <div class="field-value">
           <v-row>
-            <v-col class="col-field-value" cols="12" md="8">
+            <v-col class="col-field-value" cols="12" md="9">
               <h1>U$</h1>
               <v-text-field
                 class="input-value"
@@ -28,9 +36,9 @@
                 @focus="clearMsgWarning"
               />
             </v-col>
-            <v-col class="col-field-value" cols="12" md="4">
+            <v-col class="col-field-value" cols="12" md="3">
               <v-btn class="btn-search" @click="search">
-                <span v-show="!loading">Buscar Ativos</span>
+                <span v-show="!loading">Adicionar</span>
                 <v-progress-circular
                   v-show="loading"
                   indeterminate
@@ -65,7 +73,7 @@ function getAssetsAgain(to, next) {
       });
     }
     if (!valueInvested && valueToInvest) {
-      store.commit("walletModule/SET_VALUES_INIT", valueToInvest);
+      store.commit("walletModule/SET_VALUES_RECOVERY", valueToInvest);
       store.dispatch("cryptoAndStockModule/fetchCryptoAndStock").then(() => {
         next();
       });
@@ -94,7 +102,12 @@ export default {
     search() {
       if (this.valueToInvest != 0.0) {
         this.loading = true;
-        store.commit("walletModule/SET_VALUES_INIT", this.valueToInvest);
+        if (this.walletModule.valueWallet) {
+          store.commit("walletModule/SET_NEW_VALUE_INVEST", this.valueToInvest);
+        } else {
+          store.commit("walletModule/SET_VALUES_INIT", this.valueToInvest);
+        }
+        store.commit("cryptoAndStockModule/STOP_CALL_API", false);
         store
           .dispatch("cryptoAndStockModule/fetchCryptoAndStock")
           .then(() => {
@@ -155,7 +168,6 @@ export default {
   display: flex;
   flex-direction: row;
   padding: 0;
-  justify-content: center;
 }
 
 .field-value h1 {
@@ -165,6 +177,7 @@ export default {
 
 .btn-search {
   margin-top: 4px;
+  margin-left: 10px;
   background-color: #3d5af1 !important;
   color: #fff !important;
   height: 50px !important;
@@ -176,6 +189,16 @@ export default {
 @media (max-width: 991px) {
   .container-home {
     padding-top: 40px;
+  }
+  .btn-search {
+    margin-top: 4px;
+    margin-left: 0px;
+  }
+  .col-field-value {
+    display: flex;
+    flex-direction: row;
+    padding: 0;
+    justify-content: center;
   }
   .obs {
     margin-top: 20px;

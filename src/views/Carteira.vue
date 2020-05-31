@@ -5,26 +5,67 @@
         <h1>
           Minha Carteira de Ativos
         </h1>
+        <v-spacer></v-spacer>
+        <div v-show="this.walletModule.valueWallet">
+          <v-dialog
+            v-model="confirmDialog"
+            :retain-focus="false"
+            persistent
+            max-width="300"
+          >
+            <template v-slot:activator="{ on }">
+              <v-btn
+                class="btn-clear"
+                @click="confirmDialog = true"
+                v-on="{ on }"
+              >
+                <span>Deletar</span><v-icon>mdi-delete</v-icon>
+              </v-btn>
+            </template>
+            <v-card class="card-assets">
+              <div class="card-confirm-header">
+                <h1>
+                  Todos os dados da carteira serão deletados, deseja prosseguir?
+                </h1>
+              </div>
+              <v-card-actions class="wallet-actions">
+                <v-btn
+                  class="btn-confirm"
+                  color="#FFC529"
+                  @click="confirmDialog = false"
+                >
+                  Não
+                </v-btn>
+                <v-spacer></v-spacer>
+                <v-btn class="btn-confirm" color="#FFC529" @click="clearWallet"
+                  >Sim
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+        </div>
       </div>
       <v-row no-gutters>
-        <v-col cols="12" md="4">
+        <v-col cols="12" md="3">
           <v-card class="card-wallet">
             <div class="card-wallet-header">
-              <h1>Valor Total</h1>
+              <h1>Valor Total Atual</h1>
             </div>
             <div class="card-wallet-body">
               <h1>
                 U$
                 {{
-                  this.walletModule.valueWallet
-                    ? this.walletModule.valueWallet
+                  this.walletModule.valueWalletCurrent
+                    ? !isNaN(this.walletModule.valueWalletCurrent)
+                      ? this.walletModule.valueWalletCurrent
+                      : "0.00"
                     : "0.00"
                 }}
               </h1>
             </div>
           </v-card>
         </v-col>
-        <v-col cols="12" md="4">
+        <v-col cols="12" md="3">
           <v-card class="card-wallet">
             <div class="card-wallet-header">
               <h1>Valor em Caixa</h1>
@@ -41,10 +82,10 @@
             </div>
           </v-card>
         </v-col>
-        <v-col cols="12" md="4">
+        <v-col cols="12" md="3">
           <v-card class="card-wallet">
             <div class="card-wallet-header">
-              <h1>Valor em Investido</h1>
+              <h1>Valor Investido</h1>
             </div>
             <div class="card-wallet-body">
               <h1>
@@ -52,6 +93,27 @@
                 {{
                   this.walletModule.valueInvested
                     ? this.walletModule.valueInvested
+                    : "0.00"
+                }}
+              </h1>
+            </div>
+          </v-card>
+        </v-col>
+        <v-col cols="12" md="3">
+          <v-card class="card-wallet">
+            <div class="card-wallet-header">
+              <h1>Lucro/Prejuízo Total</h1>
+            </div>
+            <div class="card-wallet-body">
+              <h1
+                :class="
+                  this.walletModule.gainOrLoss >= 0 ? 'colorGreen' : 'colorRed'
+                "
+              >
+                U$
+                {{
+                  this.walletModule.gainOrLoss
+                    ? this.walletModule.gainOrLoss.toFixed(2)
                     : "0.00"
                 }}
               </h1>
@@ -134,7 +196,7 @@ function getAssetsAgain(to, next) {
       });
     }
     if (!valueInvested && valueToInvest) {
-      store.commit("walletModule/SET_VALUES_INIT", valueToInvest);
+      store.commit("walletModule/SET_VALUES_RECOVERY", valueToInvest);
       store.dispatch("cryptoAndStockModule/fetchCryptoAndStock").then(() => {
         next();
       });
@@ -146,14 +208,21 @@ function getAssetsAgain(to, next) {
 export default {
   data: function() {
     return {
-      loading: false
+      confirmDialog: false
     };
+  },
+  methods: {
+    clearWallet() {
+      store.commit("walletModule/CLEAR_WALLET");
+      store.commit("cryptoAndStockModule/STOP_CALL_API", true);
+      this.confirmDialog = false;
+    }
   },
   beforeRouteEnter(to, from, next) {
     getAssetsAgain(to, next);
   },
   computed: {
-    ...mapState(["walletModule"])
+    ...mapState(["cryptoAndStockModule", "walletModule"])
   }
 };
 </script>
@@ -161,6 +230,22 @@ export default {
 <style>
 .container-wallet {
   padding: 70px 200px 70px 200px;
+}
+
+.btn-clear {
+  height: 40px !important;
+  background-color: #3d5af1 !important;
+  color: #fff !important;
+}
+
+.btn-clear span {
+  margin-top: 3px;
+  font-size: 16px;
+  margin-bottom: 3px;
+}
+
+.btn-clear .v-icon.v-icon {
+  margin-bottom: 3px;
 }
 
 .header {
@@ -172,6 +257,20 @@ export default {
 
 .header h1 {
   font-size: 26px;
+}
+
+.card-confirm-header {
+  text-align: center;
+  font-size: 10px;
+}
+
+.btn-confirm {
+  margin-top: 15px;
+  font-size: 16px !important;
+  padding: 0 30px !important;
+  background-color: #3d5af1 !important;
+  color: #fff !important;
+  height: 50px !important;
 }
 
 .card-wallet {
@@ -233,6 +332,11 @@ export default {
 @media (max-width: 991px) {
   .container-wallet {
     padding: 80px 12px;
+  }
+  .header {
+    flex-direction: column;
+    margin: 20px 0;
+    align-items: center;
   }
 }
 </style>

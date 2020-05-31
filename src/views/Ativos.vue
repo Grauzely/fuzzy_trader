@@ -3,26 +3,44 @@
     <v-container class="container-assets" fluid>
       <div
         class="info-msg"
-        v-if="this.cryptoAndStockModule.cryptosAndStocks.length == 0"
+        v-if="
+          this.cryptoAndStockModule.cryptosAndStocks.length == 0 &&
+            !this.walletModule.valueToInvest
+        "
       >
         <h1>
           Por favor, informe um valor que deseja investir, para vizualizar os
           ativos!
         </h1>
       </div>
-
+      <div
+        v-show="
+          this.cryptoAndStockModule.cryptosAndStocks.length == 0 &&
+            this.walletModule.valueToInvest
+        "
+        class="loading"
+      >
+        <v-progress-circular indeterminate size="50" color="#3d5af1">
+        </v-progress-circular>
+      </div>
       <div
         v-show="this.cryptoAndStockModule.cryptosAndStocks.length > 0"
         class="header-title"
       >
         <h1>
-          Com base no valor de U$
+          Valor disponível em caixa U$
           {{
-            this.walletModule.valueInBox ? this.walletModule.valueInBox : "0.00"
-          }}
-          sugerimos os seguintes ativos:
+            this.walletModule.valueInBox
+              ? this.walletModule.valueInBox
+              : "0.00"
+          }}, sugerimos os seguintes ativos:
         </h1>
       </div>
+      <v-alert v-if="sucess" dense text dismissible type="success">
+        A compra de
+        <strong>{{ this.wallet.qtdAssets + " " + this.wallet.symbol }}</strong>
+        foi realizada com sucesso!
+      </v-alert>
       <h1
         v-show="this.cryptoAndStockModule.cryptos.length != 0"
         class="body-title"
@@ -129,6 +147,11 @@
                     <v-spacer></v-spacer>
                     <h2>U$ {{ wallet.valueBuy }}</h2>
                   </div>
+                  <div class="card-line">
+                    <h2>Caixa disponível</h2>
+                    <v-spacer></v-spacer>
+                    <h2>U$ {{ valueAvalilable }}</h2>
+                  </div>
                   <div class="card-line1">
                     <h2>U$</h2>
                     <v-text-field
@@ -156,7 +179,7 @@
                       class="btn-add"
                       color="#FFC529"
                       @click="addInWallet('crypto')"
-                      >Adicionar
+                      >Comprar
                     </v-btn>
                   </v-card-actions>
                 </v-card>
@@ -273,6 +296,11 @@
                       {{ wallet.valueBuy }}
                     </h2>
                   </div>
+                  <div class="card-line">
+                    <h2>Caixa disponível</h2>
+                    <v-spacer></v-spacer>
+                    <h2>U$ {{ valueAvalilable }}</h2>
+                  </div>
                   <div class="card-line1">
                     <h2>{{ wallet.symbol }}</h2>
                     <v-text-field
@@ -300,7 +328,7 @@
                       class="btn-add"
                       color="#FFC529"
                       @click="addInWallet('stock')"
-                      >Adicionar
+                      >Comprar
                     </v-btn>
                   </v-card-actions>
                 </v-card>
@@ -328,7 +356,7 @@ function getAssetsAgain(to, next) {
       });
     }
     if (!valueInvested && valueToInvest) {
-      store.commit("walletModule/SET_VALUES_INIT", valueToInvest);
+      store.commit("walletModule/SET_VALUES_RECOVERY", valueToInvest);
       store.dispatch("cryptoAndStockModule/fetchCryptoAndStock").then(() => {
         next();
       });
@@ -347,9 +375,11 @@ export default {
   data: function() {
     return {
       loading: false,
+      sucess: false,
       msgWarning: null,
       dialogCrypto: null,
       dialogStock: null,
+      valueAvalilable: null,
       valueAdd: null,
       wallet: this.createNewWallet()
     };
@@ -371,6 +401,7 @@ export default {
       this.wallet.symbol = asset.symbol;
       this.wallet.valueBuy = asset.price;
       this.wallet.exchange = asset.exchange;
+      this.valueAvalilable = this.walletModule.valueInBox;
     },
     clearMsgWarning() {
       this.msgWarning = null;
@@ -395,6 +426,10 @@ export default {
           this.valueAdd = null;
           this.dialogCrypto = false;
           this.dialogStock = false;
+          this.sucess = true;
+          setTimeout(() => {
+            this.sucess = false;
+          }, 5000);
         } else if (
           asset == "stock" &&
           UsdToDecimal(this.walletModule.valueInBox) >= this.stockToAdd
@@ -405,6 +440,10 @@ export default {
           this.valueAdd = null;
           this.dialogCrypto = false;
           this.dialogStock = false;
+          this.sucess = true;
+          setTimeout(() => {
+            this.sucess = false;
+          }, 5000);
         } else {
           this.msgWarning =
             "Não é possivel fazer a operação, saldo insuficiente!";
@@ -445,9 +484,14 @@ export default {
   margin: 100px;
 }
 
+.loading {
+  margin-top: 200px;
+  text-align: center;
+}
+
 .body-title {
   font-size: 26px;
-  font-weight: 500;
+  font-weight: bold;
 }
 
 .header-title {
@@ -548,6 +592,7 @@ export default {
   font-size: 16px !important;
   background-color: #3d5af1 !important;
   color: #fff !important;
+  padding: 0 30px !important;
   height: 50px !important;
 }
 
@@ -571,6 +616,9 @@ export default {
   }
   .header-title h1 {
     font-size: 24px;
+  }
+  .btn-add {
+    padding: 0 15px !important;
   }
   .body-title {
     font-size: 24px;

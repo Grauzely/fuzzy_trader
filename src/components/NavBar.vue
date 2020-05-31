@@ -17,7 +17,16 @@
           <v-icon>mdi-wallet</v-icon>
         </v-btn>
       </div>
-      <h1>U$ {{ walletModule.valueWallet }}</h1>
+      <h1>
+        U$
+        {{
+          this.walletModule.valueWalletCurrent
+            ? !isNaN(this.walletModule.valueWalletCurrent)
+              ? this.walletModule.valueWalletCurrent
+              : "0.00"
+            : "0.00"
+        }}
+      </h1>
     </v-app-bar>
     <v-bottom-navigation
       class="navBottom"
@@ -104,7 +113,7 @@ export default {
   .navBottom {
     bottom: -1px !important;
     display: flex !important;
-    padding: 0 20px;
+    padding: 10px 20px;
     height: 60px !important;
     background-color: #0e153a !important;
   }
