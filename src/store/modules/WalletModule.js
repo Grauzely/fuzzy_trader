@@ -1,17 +1,56 @@
 export const namespaced = true;
 
-function decimalToUsd(priceItem) {
-  if (priceItem) {
-    return priceItem.toLocaleString("en-US", {
-      minimumFractionDigits: 2
-    });
-  }
-}
-
 function usdToDecimal(priceItem) {
   if (priceItem) {
     return parseFloat(priceItem.replace(",", ""));
   }
+}
+
+function newValuesWallet(state, valueToInvest) {
+  state.valueWallet = valueToInvest;
+  state.valueInBox = valueToInvest;
+  state.valueToInvest = valueToInvest;
+  localStorage.setItem("valueWallet", valueToInvest);
+  localStorage.setItem("valueInBox", valueToInvest);
+  localStorage.setItem("valueToInvest", valueToInvest);
+  localStorage.removeItem("valueInvested");
+  localStorage.removeItem("assetsWallet");
+}
+
+function calcValueTotal(assetWallet, position) {
+  assetWallet.qtdAssets * assetWallet.valueBuy +
+    state.assetsWallet[position].valueTotal;
+}
+
+function calcValueBy(assetWallet, position) {
+  (assetWallet.valueBuy + state.assetsWallet[position].valueBuy) / 2;
+}
+
+function updateAssetsValueCurrent(state, cryptosAndStocks) {
+  return state.assetsWallet.map(asset => {
+    var cryptoOrStock = cryptosAndStocks.filter(
+      cryptosAndStocks => cryptosAndStocks.symbol == asset.symbol
+    );
+    asset.valueCurrent = cryptoOrStock[0].price;
+    return asset;
+  });
+}
+
+function calcGainOrLoss(state) {
+  return state.assetsWallet.reduce((total, asset) => {
+    return (total += (asset.valueCurrent - asset.valueBuy) * asset.qtdAssets);
+  }, 0);
+}
+
+function calcValueWalletCurrent(state) {
+  return (
+    state.valueInBox +
+    state.assetsWallet.reduce((total, asset) => {
+      return (total +=
+        asset.valueTotal +
+        (asset.valueCurrent - asset.valueBuy) * asset.qtdAssets);
+    }, 0)
+  );
 }
 
 export const state = {
@@ -26,46 +65,26 @@ export const state = {
 
 export const mutations = {
   SET_VALUES_INIT(state, valueToInvest) {
-    state.valueWallet = valueToInvest;
-    state.valueInBox = valueToInvest;
-    state.valueToInvest = valueToInvest;
-    localStorage.setItem("valueWallet", valueToInvest);
-    localStorage.setItem("valueInBox", valueToInvest);
-    localStorage.setItem("valueToInvest", valueToInvest);
-    localStorage.removeItem("valueInvested");
-    localStorage.removeItem("assetsWallet");
+    newValuesWallet(state, valueToInvest);
   },
   SET_VALUES_RECOVERY(state, valueToInvest) {
-    state.valueWallet = valueToInvest;
-    state.valueInBox = valueToInvest;
-    state.valueToInvest = valueToInvest;
-    localStorage.setItem("valueWallet", valueToInvest);
-    localStorage.setItem("valueInBox", valueToInvest);
-    localStorage.setItem("valueToInvest", valueToInvest);
-    localStorage.removeItem("valueInvested");
-    localStorage.removeItem("assetsWallet");
+    newValuesWallet(state, valueToInvest);
     state.valueInvested = 0.0;
     state.assetsWallet = [];
   },
   SET_NEW_VALUE_INVEST(state, valueToInvest) {
-    state.valueToInvest = decimalToUsd(
-      usdToDecimal(state.valueToInvest) + usdToDecimal(valueToInvest)
-    );
-    state.valueWallet = decimalToUsd(
-      usdToDecimal(state.valueWallet) + usdToDecimal(valueToInvest)
-    );
-    state.valueInBox = decimalToUsd(
-      usdToDecimal(state.valueInBox) + usdToDecimal(valueToInvest)
-    );
+    state.valueToInvest = state.valueToInvest + valueToInvest;
+    state.valueWallet = state.valueWallet + valueToInvest;
+    state.valueInBox = state.valueInBox + valueToInvest;
     localStorage.setItem("valueToInvest", state.valueToInvest);
     localStorage.setItem("valueWallet", state.valueWallet);
     localStorage.setItem("valueInBox", state.valueInBox);
   },
   RECOVERY_WALLET(state) {
-    state.valueWallet = localStorage.getItem("valueWallet");
-    state.valueInBox = localStorage.getItem("valueInBox");
-    state.valueToInvest = localStorage.getItem("valueToInvest");
-    state.valueInvested = localStorage.getItem("valueInvested");
+    state.valueWallet = usdToDecimal(localStorage.getItem("valueWallet"));
+    state.valueInBox = usdToDecimal(localStorage.getItem("valueInBox"));
+    state.valueToInvest = usdToDecimal(localStorage.getItem("valueToInvest"));
+    state.valueInvested = usdToDecimal(localStorage.getItem("valueInvested"));
     state.assetsWallet = JSON.parse(localStorage.getItem("assetsWallet"));
   },
   CLEAR_WALLET(state) {
@@ -85,73 +104,38 @@ export const mutations = {
     state.assetsWallet = [];
   },
   SET_ASSET_WALLET(state, assetWallet) {
-    const index = state.assetsWallet.findIndex(
+    const position = state.assetsWallet.findIndex(
       assetsWallet => assetsWallet.symbol === assetWallet.symbol
     );
-    if (index != -1) {
-      assetWallet.valueTotal = decimalToUsd(
-        assetWallet.qtdAssets * assetWallet.valueBuy +
-          usdToDecimal(state.assetsWallet[index].valueTotal)
-      );
-
-      assetWallet.qtdAssets += state.assetsWallet[index].qtdAssets;
-
+    if (position != -1) {
+      assetWallet.valueTotal = calcValueTotal(assetWallet, position);
+      assetWallet.qtdAssets += state.assetsWallet[position].qtdAssets;
       assetWallet.valueCurrent = assetWallet.valueBuy;
-
-      assetWallet.valueBuy =
-        (assetWallet.valueBuy + state.assetsWallet[index].valueBuy) / 2;
-
-      state.assetsWallet[index] = { ...assetWallet };
+      assetWallet.valueBuy = calcValueBy(assetWallet, position);
+      state.assetsWallet[position] = { ...assetWallet };
     } else {
       assetWallet.valueCurrent = assetWallet.valueBuy;
-      assetWallet.valueTotal = decimalToUsd(
-        assetWallet.qtdAssets * assetWallet.valueBuy
-      );
+      assetWallet.valueTotal = assetWallet.qtdAssets * assetWallet.valueBuy;
       state.assetsWallet.push({ ...assetWallet });
     }
-
     state.valueInvested = state.assetsWallet.reduce(
       (valueInvested, assetsWallet) =>
-        (valueInvested += usdToDecimal(assetsWallet.valueTotal))
+        (valueInvested += assetsWallet.valueTotal)
     );
-    state.valueInvested = decimalToUsd(
-      state.assetsWallet.reduce((total, elemento) => {
-        return (total += usdToDecimal(elemento.valueTotal));
-      }, 0)
-    );
+    state.valueInvested = state.assetsWallet.reduce((total, assetWallet) => {
+      return (total += assetWallet.valueTotal);
+    }, 0);
+    state.valueInBox = state.valueWallet - state.valueInvested;
+
     localStorage.setItem("valueInvested", state.valueInvested);
-    state.valueInBox = decimalToUsd(
-      usdToDecimal(state.valueWallet) - usdToDecimal(state.valueInvested)
-    );
-    localStorage.setItem(
-      "valueInBox",
-      state.valueInBox ? state.valueInBox : "0.00"
-    );
+    localStorage.setItem("valueInBox", state.valueInBox);
     localStorage.setItem("assetsWallet", JSON.stringify(state.assetsWallet));
   },
   SET_VALUE_CURRENT(state, cryptosAndStocks) {
     if (state.assetsWallet) {
-      state.assetsWallet = state.assetsWallet.map(asset => {
-        var cryptoOrStock = cryptosAndStocks.filter(
-          cryptosAndStocks => cryptosAndStocks.symbol == asset.symbol
-        );
-        asset.valueCurrent = cryptoOrStock[0].price;
-        return asset;
-      });
-      state.gainOrLoss = state.assetsWallet.reduce((total, asset) => {
-        return (total +=
-          (asset.valueBuy - asset.valueCurrent) * asset.qtdAssets);
-      }, 0);
-      state.valueWalletCurrent = decimalToUsd(
-        (
-          usdToDecimal(state.valueInBox) +
-          state.assetsWallet.reduce((total, asset) => {
-            return (total +=
-              usdToDecimal(asset.valueTotal) +
-              (asset.valueBuy - asset.valueCurrent) * asset.qtdAssets);
-          }, 0)
-        ).toFixed(2)
-      );
+      state.assetsWallet = updateAssetsValueCurrent(state, cryptosAndStocks);
+      state.gainOrLoss = calcGainOrLoss(state);
+      state.valueWalletCurrent = calcValueWalletCurrent(state);
     }
   }
 };

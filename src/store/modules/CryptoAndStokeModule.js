@@ -2,12 +2,6 @@ import CryptoAndStockService from "@/services/CryptoAndStockService.js";
 
 export const namespaced = true;
 
-function usdToDecimal(priceItem) {
-  if (priceItem) {
-    return parseFloat(priceItem.replace(",", ""));
-  }
-}
-
 export const state = {
   cryptos: [],
   stocks: [],
@@ -36,21 +30,25 @@ export const mutations = {
 };
 
 export const actions = {
-  fetchCryptoAndStock({ state, commit, getters, dispatch }) {
-    var callApi = setInterval(() => {
-      return CryptoAndStockService.getCryptoAndStock().then(response => {
+  fetchCryptoAndStock({ commit, getters, dispatch }) {
+    //  var callApi = setInterval(() => {
+    return CryptoAndStockService.getCryptoAndStock()
+      .then(response => {
         commit("SET_CRYPTOS_AND_STOCKS", response.data);
         dispatch("walletModule/fetchValueCurrent", response.data, {
           root: true
         });
         commit("SET_CRYPTOS", getters.getCryptos);
         commit("SET_STOCKS", getters.getStocks);
-        if (state.stopCallApi) {
-          clearInterval(callApi);
-          commit("CLEAR_CRYPTOS_AND_STOCKS");
-        }
+        //       if (state.stopCallApi) {
+        //         clearInterval(callApi);
+        //         commit("CLEAR_CRYPTOS_AND_STOCKS");
+        //        }
+      })
+      .catch(error => {
+        console.log("Erro: " + error);
       });
-    }, 1000);
+    //   }, 1000);
   }
 };
 
@@ -62,10 +60,7 @@ export const getters = {
   },
   getStocks: state => {
     return state.cryptosAndStocks.filter(
-      cryptosAndStocks =>
-        cryptosAndStocks.exchange != "CRYPTO" &&
-        cryptosAndStocks.price <=
-          usdToDecimal(localStorage.getItem("valueInBox"))
+      cryptosAndStocks => cryptosAndStocks.exchange == "NASDAQ"
     );
   },
   getCheckExistAssets: state => {

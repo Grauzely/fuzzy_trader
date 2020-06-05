@@ -31,12 +31,12 @@
           Valor disponível em caixa U$
           {{
             this.walletModule.valueInBox
-              ? this.walletModule.valueInBox
+              ? maskUsd(this.walletModule.valueInBox)
               : "0.00"
           }}, sugerimos os seguintes ativos:
         </h1>
       </div>
-      <v-alert v-if="sucess" dense text dismissible type="success">
+      <v-alert v-if="success" dense text dismissible type="success">
         A compra de
         <strong>{{ this.wallet.qtdAssets + " " + this.wallet.symbol }}</strong>
         foi realizada com sucesso!
@@ -150,7 +150,7 @@
                   <div class="card-line">
                     <h2>Caixa disponível</h2>
                     <v-spacer></v-spacer>
-                    <h2>U$ {{ valueAvalilable }}</h2>
+                    <h2>U$ {{ valueAvailable }}</h2>
                   </div>
                   <div class="card-line1">
                     <h2>U$</h2>
@@ -299,7 +299,7 @@
                   <div class="card-line">
                     <h2>Caixa disponível</h2>
                     <v-spacer></v-spacer>
-                    <h2>U$ {{ valueAvalilable }}</h2>
+                    <h2>U$ {{ valueAvailable }}</h2>
                   </div>
                   <div class="card-line1">
                     <h2>{{ wallet.symbol }}</h2>
@@ -344,42 +344,18 @@
 <script>
 import { mapState } from "vuex";
 import store from "@/store/index.js";
-
-function getAssetsAgain(to, next) {
-  let valueToInvest = localStorage.getItem("valueToInvest");
-  let valueInvested = localStorage.getItem("valueInvested");
-  if (store.getters["cryptoAndStockModule/getCheckExistAssets"]) {
-    if (valueInvested) {
-      store.commit("walletModule/RECOVERY_WALLET");
-      store.dispatch("cryptoAndStockModule/fetchCryptoAndStock").then(() => {
-        next();
-      });
-    }
-    if (!valueInvested && valueToInvest) {
-      store.commit("walletModule/SET_VALUES_RECOVERY", valueToInvest);
-      store.dispatch("cryptoAndStockModule/fetchCryptoAndStock").then(() => {
-        next();
-      });
-    }
-  }
-  next();
-}
-
-function UsdToDecimal(priceItem) {
-  if (priceItem) {
-    return parseFloat(priceItem.replace(",", ""));
-  }
-}
+import { mixinForAllPages } from "@/mixins/mixinForAllPages.js";
 
 export default {
+  mixins: [mixinForAllPages],
   data: function() {
     return {
       loading: false,
-      sucess: false,
+      success: false,
       msgWarning: null,
       dialogCrypto: null,
       dialogStock: null,
-      valueAvalilable: null,
+      valueAvailable: null,
       valueAdd: null,
       wallet: this.createNewWallet()
     };
@@ -401,7 +377,7 @@ export default {
       this.wallet.symbol = asset.symbol;
       this.wallet.valueBuy = asset.price;
       this.wallet.exchange = asset.exchange;
-      this.valueAvalilable = this.walletModule.valueInBox;
+      this.valueAvailable = this.walletModule.valueInBox;
     },
     clearMsgWarning() {
       this.msgWarning = null;
@@ -414,11 +390,10 @@ export default {
       this.createNewWallet();
     },
     addInWallet(asset) {
-      if (this.valueAdd) {
+      if (this.valueAdd > 0.0) {
         if (
           asset == "crypto" &&
-          UsdToDecimal(this.walletModule.valueInBox) >=
-            UsdToDecimal(this.valueAdd)
+          this.walletModule.valueInBox >= this.valueAdd
         ) {
           this.wallet.qtdAssets = this.cryptoToAdd;
           store.dispatch("walletModule/addAssetWallet", this.wallet);
@@ -426,13 +401,13 @@ export default {
           this.valueAdd = null;
           this.dialogCrypto = false;
           this.dialogStock = false;
-          this.sucess = true;
+          this.success = true;
           setTimeout(() => {
-            this.sucess = false;
+            this.success = false;
           }, 5000);
         } else if (
           asset == "stock" &&
-          UsdToDecimal(this.walletModule.valueInBox) >= this.stockToAdd
+          this.walletModule.valueInBox >= this.stockToAdd
         ) {
           this.wallet.qtdAssets = parseInt(this.valueAdd);
           store.dispatch("walletModule/addAssetWallet", this.wallet);
@@ -440,21 +415,18 @@ export default {
           this.valueAdd = null;
           this.dialogCrypto = false;
           this.dialogStock = false;
-          this.sucess = true;
+          this.success = true;
           setTimeout(() => {
-            this.sucess = false;
+            this.success = false;
           }, 5000);
         } else {
           this.msgWarning =
             "Não é possivel fazer a operação, saldo insuficiente!";
         }
       } else {
-        this.msgWarning = "Por favor, preenchar o campo acima!";
+        this.msgWarning = "O campo acima não pode ser vazio ou negativo!";
       }
     }
-  },
-  beforeRouteEnter(to, from, next) {
-    getAssetsAgain(to, next);
   },
   computed: {
     ...mapState(["cryptoAndStockModule", "walletModule"]),

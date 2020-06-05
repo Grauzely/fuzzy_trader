@@ -19,7 +19,7 @@
           Você tem disponível em caixa U$
           {{
             this.walletModule.valueInBox
-              ? this.walletModule.valueInBox
+              ? maskUsd(this.walletModule.valueInBox)
               : "0.00"
           }}, deseja adicionar mais?
         </h1>
@@ -38,13 +38,7 @@
             </v-col>
             <v-col class="col-field-value" cols="12" md="3">
               <v-btn class="btn-search" @click="search">
-                <span v-show="!loading">Adicionar</span>
-                <v-progress-circular
-                  v-show="loading"
-                  indeterminate
-                  color="white"
-                >
-                </v-progress-circular>
+                Adicionar
               </v-btn>
             </v-col>
           </v-row>
@@ -61,32 +55,19 @@
 <script>
 import { mapState } from "vuex";
 import store from "@/store/index.js";
+import { mixinForAllPages } from "@/mixins/mixinForAllPages.js";
 
-function getAssetsAgain(to, next) {
-  let valueToInvest = localStorage.getItem("valueToInvest");
-  let valueInvested = localStorage.getItem("valueInvested");
-  if (store.getters["cryptoAndStockModule/getCheckExistAssets"]) {
-    if (valueInvested) {
-      store.commit("walletModule/RECOVERY_WALLET");
-      store.dispatch("cryptoAndStockModule/fetchCryptoAndStock").then(() => {
-        next();
-      });
-    }
-    if (!valueInvested && valueToInvest) {
-      store.commit("walletModule/SET_VALUES_RECOVERY", valueToInvest);
-      store.dispatch("cryptoAndStockModule/fetchCryptoAndStock").then(() => {
-        next();
-      });
-    }
+function usdToDecimal(priceItem) {
+  if (priceItem && typeof priceItem === "string") {
+    return parseFloat(priceItem.replace(",", ""));
   }
-  next();
 }
 
 export default {
+  mixins: [mixinForAllPages],
   data: function() {
     return {
       valueToInvest: null,
-      loading: false,
       money: {
         decimal: ".",
         thousands: ",",
@@ -100,34 +81,30 @@ export default {
   },
   methods: {
     search() {
-      if (this.valueToInvest != 0.0) {
-        this.loading = true;
+      this.valueToInvest = usdToDecimal(this.valueToInvest);
+      if (this.valueToInvest > 0.0) {
         if (this.walletModule.valueWallet) {
           store.commit("walletModule/SET_NEW_VALUE_INVEST", this.valueToInvest);
         } else {
           store.commit("walletModule/SET_VALUES_INIT", this.valueToInvest);
         }
         store.commit("cryptoAndStockModule/STOP_CALL_API", false);
-        store
-          .dispatch("cryptoAndStockModule/fetchCryptoAndStock")
-          .then(() => {
-            this.loading = false;
-            this.$router.push({ path: "/ativos" });
-          })
-          .catch(error => {
-            this.loading = false;
-            console.log("Erro: " + error);
-          });
+        store.dispatch("cryptoAndStockModule/fetchCryptoAndStock").then(() => {
+          this.$router.push({ path: "/ativos" });
+        });
       } else {
-        this.msgWarning = "Por favor, defina um valor no campo acima!";
+        this.msgWarning = "O campo acima não pode ser vazio ou negativo!";
       }
     },
     clearMsgWarning() {
       this.msgWarning = null;
+    },
+    maskUsd(value) {
+      return value.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
     }
-  },
-  beforeRouteEnter(to, from, next) {
-    getAssetsAgain(to, next);
   },
   computed: {
     ...mapState(["cryptoAndStockModule", "walletModule"])

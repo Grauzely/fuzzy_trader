@@ -55,10 +55,9 @@
               <h1>
                 U$
                 {{
-                  this.walletModule.valueWalletCurrent
-                    ? !isNaN(this.walletModule.valueWalletCurrent)
-                      ? this.walletModule.valueWalletCurrent
-                      : "0.00"
+                  this.walletModule.valueWalletCurrent &&
+                  !isNaN(this.walletModule.valueWalletCurrent)
+                    ? maskUsd(this.walletModule.valueWalletCurrent)
                     : "0.00"
                 }}
               </h1>
@@ -75,7 +74,7 @@
                 U$
                 {{
                   this.walletModule.valueInBox
-                    ? this.walletModule.valueInBox
+                    ? maskUsd(this.walletModule.valueInBox)
                     : "0.00"
                 }}
               </h1>
@@ -92,7 +91,7 @@
                 U$
                 {{
                   this.walletModule.valueInvested
-                    ? this.walletModule.valueInvested
+                    ? maskUsd(this.walletModule.valueInvested)
                     : "0.00"
                 }}
               </h1>
@@ -113,7 +112,7 @@
                 U$
                 {{
                   this.walletModule.gainOrLoss
-                    ? this.walletModule.gainOrLoss.toFixed(2)
+                    ? maskUsd(this.walletModule.gainOrLoss)
                     : "0.00"
                 }}
               </h1>
@@ -137,7 +136,10 @@
               <div class="card-line">
                 <h2>Valor Total:</h2>
                 <v-spacer></v-spacer>
-                <h2>U$ {{ asset.valueTotal }}</h2>
+                <h2>
+                  U$
+                  {{ maskUsd(asset.valueTotal) }}
+                </h2>
               </div>
               <div class="card-line">
                 <h2>Quantidade Total:</h2>
@@ -147,16 +149,22 @@
               <div class="card-line">
                 <h2>Preço Médio:</h2>
                 <v-spacer></v-spacer>
-                <h2>U$ {{ asset.valueBuy }}</h2>
+                <h2>
+                  U$
+                  {{ asset.valueBuy }}
+                </h2>
               </div>
               <div class="card-line">
                 <h2>Preço Atual:</h2>
                 <v-spacer></v-spacer>
-                <h2>U$ {{ asset.valueCurrent }}</h2>
+                <h2>
+                  U$
+                  {{ asset.valueCurrent }}
+                </h2>
               </div>
               <div
                 :class="
-                  asset.valueBuy >= asset.valueCurrent
+                  asset.valueBuy <= asset.valueCurrent
                     ? 'card-line-green'
                     : 'card-line-red'
                 "
@@ -166,10 +174,9 @@
                 <h2>
                   U$
                   {{
-                    (
-                      (asset.valueBuy - asset.valueCurrent) *
-                      asset.qtdAssets
-                    ).toFixed(2)
+                    maskUsd(
+                      (asset.valueCurrent - asset.valueBuy) * asset.qtdAssets
+                    )
                   }}
                 </h2>
               </div>
@@ -184,28 +191,10 @@
 <script>
 import { mapState } from "vuex";
 import store from "@/store/index.js";
-
-function getAssetsAgain(to, next) {
-  let valueToInvest = localStorage.getItem("valueToInvest");
-  let valueInvested = localStorage.getItem("valueInvested");
-  if (store.getters["cryptoAndStockModule/getCheckExistAssets"]) {
-    if (valueInvested) {
-      store.commit("walletModule/RECOVERY_WALLET");
-      store.dispatch("cryptoAndStockModule/fetchCryptoAndStock").then(() => {
-        next();
-      });
-    }
-    if (!valueInvested && valueToInvest) {
-      store.commit("walletModule/SET_VALUES_RECOVERY", valueToInvest);
-      store.dispatch("cryptoAndStockModule/fetchCryptoAndStock").then(() => {
-        next();
-      });
-    }
-  }
-  next();
-}
+import { mixinForAllPages } from "@/mixins/mixinForAllPages.js";
 
 export default {
+  mixins: [mixinForAllPages],
   data: function() {
     return {
       confirmDialog: false
@@ -217,9 +206,6 @@ export default {
       store.commit("cryptoAndStockModule/STOP_CALL_API", true);
       this.confirmDialog = false;
     }
-  },
-  beforeRouteEnter(to, from, next) {
-    getAssetsAgain(to, next);
   },
   computed: {
     ...mapState(["cryptoAndStockModule", "walletModule"])

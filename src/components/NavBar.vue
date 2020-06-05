@@ -17,15 +17,18 @@
           <v-icon>mdi-wallet</v-icon>
         </v-btn>
       </div>
-      <h1>
+
+      <h1
+        v-if="
+          this.walletModule.valueWalletCurrent &&
+            !isNaN(this.walletModule.valueWalletCurrent)
+        "
+      >
         U$
-        {{
-          this.walletModule.valueWalletCurrent
-            ? !isNaN(this.walletModule.valueWalletCurrent)
-              ? this.walletModule.valueWalletCurrent
-              : "0.00"
-            : "0.00"
-        }}
+        {{ maskUsd(this.walletModule.valueWalletCurrent) }}
+      </h1>
+      <h1 v-else>
+        U$ 0.00
       </h1>
     </v-app-bar>
     <v-bottom-navigation
@@ -58,6 +61,14 @@ export default {
     return {
       bottomNav: "1"
     };
+  },
+  methods: {
+    maskUsd(value) {
+      return value.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
   },
   computed: {
     ...mapState(["walletModule"])
